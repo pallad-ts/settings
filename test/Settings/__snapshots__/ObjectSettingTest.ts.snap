@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ObjectSetting merging fails if validation fails at any stage or merging 1`] = `
+Object {
+  "@@type": "monet.js/Validation",
+  "isSuccessValue": false,
+  "val": "Invalid value foo",
+}
+`;

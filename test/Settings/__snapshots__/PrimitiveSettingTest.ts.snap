@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`PrimitiveSetting merging fails if last values is invalid 1`] = `
+Object {
+  "@@type": "monet.js/Validation",
+  "isSuccessValue": false,
+  "val": "Invalid value",
+}
+`;

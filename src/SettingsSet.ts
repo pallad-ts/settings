@@ -10,16 +10,15 @@ export class SettingsSet<TNames extends string, T extends Record<TNames, Setting
 				readonly overrideProvider: OverrideProvider<TNames>) {
 	}
 
-	async resolveSetting(name: TNames, target: unknown) {
+	async resolveSetting<TName extends TNames>(name: TName, target: unknown) {
 		const setting = this.assertSettingByName(name);
 		const override = await this.overrideProvider(name, target);
 		const finalOverride = override.map(x => Array.isArray(x) ? x : [x]);
-		return await setting.merge(finalOverride) as Validation<string, Setting.Type<T[TNames]>>;
+		return await setting.merge(finalOverride) as Validation<string, Setting.Type<T[TName]>>;
 	}
 
-	async resolveSettingOrFail(name: TNames, target: unknown): Promise<Setting.Type<T[TNames]>> {
-		const result = await this.resolveSetting(name, target);
-
+	async resolveSettingOrFail<TName extends TNames>(name: TName, target: unknown) {
+		const result = await this.resolveSetting<TName>(name, target);
 		result.forEachFail(x => {
 			throw ERRORS.INVALID_SETTING_VALUE.format(x);
 		})

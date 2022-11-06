@@ -1,6 +1,7 @@
-import {Maybe, Validation} from "monet";
+import {Either, right} from "@sweet-monads/either";
+import {Maybe} from "@sweet-monads/maybe";
 
-const DEFAULT_VALIDATOR: Setting.Validator<any> = (value: unknown) => Validation.Success(value);
+const DEFAULT_VALIDATOR: Setting.Validator<any> = (value: unknown) => right(value);
 
 export abstract class Setting<TType> {
 	constructor(protected defaultValue: TType,
@@ -8,7 +9,7 @@ export abstract class Setting<TType> {
 
 	}
 
-	abstract merge(values: Maybe<unknown[]>): Promise<Validation<string, TType>>;
+	abstract merge(values: Maybe<unknown[]>): Promise<Either<string, TType>>;
 }
 
 export namespace Setting {
@@ -17,7 +18,7 @@ export namespace Setting {
 	}
 
 	export namespace Validator {
-		export type Result<T> = Validation<string, T>;
+		export type Result<T> = Either<string, T>;
 	}
 
 	export type Type<T extends Setting<any>> = T extends Setting<infer TType> ? TType : never;

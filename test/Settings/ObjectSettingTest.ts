@@ -1,6 +1,7 @@
 import {ObjectSetting} from "@src/Settings/ObjectSetting";
-import {Maybe, Validation} from "monet";
 import * as sinon from 'sinon';
+import {just, none} from "@sweet-monads/maybe";
+import {left, right} from "@sweet-monads/either";
 
 describe('ObjectSetting', () => {
 	const DEFAULT_VALUE = {
@@ -14,29 +15,29 @@ describe('ObjectSetting', () => {
 		const setting = new ObjectSetting(DEFAULT_VALUE);
 
 		it('returns default values if no override provided', () => {
-			return expect(setting.merge(Maybe.None()))
+			return expect(setting.merge(none()))
 				.resolves
-				.toEqual(Validation.Success(DEFAULT_VALUE));
+				.toEqual(right(DEFAULT_VALUE));
 		});
 
 		it('fails if validation fails at any stage or merging', () => {
 			const validator = sinon.stub().callsFake(value => {
 				if (value.foo === 'test') {
-					return Validation.Fail('Invalid value foo');
+					return left('Invalid value foo');
 				}
-				return Validation.Success(value);
+				return right(value);
 			});
 
 			const setting = new ObjectSetting(DEFAULT_VALUE, validator);
 
-			return expect(setting.merge(Maybe.Some([{foo: 'test'}, {foo: 'bar'}])))
+			return expect(setting.merge(just([{foo: 'test'}, {foo: 'bar'}])))
 				.resolves
 				.toMatchSnapshot();
 		});
 
 		it('returns value sanitized by validation', () => {
 			const validator = sinon.stub().callsFake(value => {
-				return Validation.Success(
+				return right(
 					Object.fromEntries(
 						Object.entries(value)
 							.map(([key, value]) => [key, (value as string).toUpperCase()])
@@ -46,9 +47,9 @@ describe('ObjectSetting', () => {
 
 			const setting = new ObjectSetting(DEFAULT_VALUE, validator);
 
-			return expect(setting.merge(Maybe.Some([{foo: 'fee'}, {zee: 'boo'}])))
+			return expect(setting.merge(just([{foo: 'fee'}, {zee: 'boo'}])))
 				.resolves
-				.toEqual(Validation.Success({foo: 'FEE', zee: 'BOO'}));
+				.toEqual(right({foo: 'FEE', zee: 'BOO'}));
 		});
 
 		afterEach(() => {

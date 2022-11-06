@@ -1,14 +1,15 @@
-import {Maybe, Validation} from "monet";
 import {Setting} from "../Setting";
 import {dataTypes} from '../';
+import {Maybe} from "@sweet-monads/maybe";
+import {right} from "@sweet-monads/either";
 
 export class PrimitiveSetting<TType> extends Setting<TType> {
 	async merge(values: Maybe<unknown[]>): Promise<Setting.Validator.Result<TType>> {
 		if (values.isNone()) {
-			return Validation.Success(this.defaultValue);
+			return right(this.defaultValue);
 		}
 
-		const lastValue = values.some()[values.some().length - 1];
+		const lastValue = values.value[values.value.length - 1];
 		return this.validator(lastValue);
 	}
 

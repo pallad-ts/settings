@@ -1,14 +1,14 @@
 import {SettingsSet} from "@src/SettingsSet";
-import {Maybe, Validation} from "monet";
 import {OverrideProvider} from "@src/OverrideProvider";
 import {assert, IsExact} from 'conditional-type-checks';
 import {PrimitiveSetting} from "@src/Settings";
-import {Setting} from "@src/Setting";
 import * as sinon from 'sinon';
+import {just, none} from "@sweet-monads/maybe";
+import {Either, left, right} from "@sweet-monads/either";
 
 describe('SettingsSet', () => {
 	const NOOP_OVERRIDE_PROVIDER: OverrideProvider<any> = (name, target) => {
-		return Promise.resolve(Maybe.None());
+		return Promise.resolve(none());
 	}
 
 	describe('resolving', () => {
@@ -27,47 +27,48 @@ describe('SettingsSet', () => {
 			const set = new SettingsSet({
 				foo: setting
 			}, () => {
-				return Maybe.Some(['bar']);
+				return just(['bar']);
 			});
 
 			await expect(set.resolveSetting('foo', {}))
 				.resolves
 				.toEqual('bar');
-			sinon.assert.calledWith(merge, Maybe.Some(['bar']));
+			sinon.assert.calledWith(merge, just(['bar']));
 		});
 
 		it('fails if setting merge fails', async () => {
 			const setting = new PrimitiveSetting('foo');
 			setting.merge = () => {
-				return Promise.resolve(Validation.Fail('Error'));
+				return Promise.resolve(left('Error'));
 			};
 
 			const set = new SettingsSet({
 				foo: setting
 			}, () => {
-				return Maybe.Some('bar');
+				return just('bar');
 			});
 
 			await expect(set.resolveSetting('foo', {}))
 				.resolves
-				.toEqual(Validation.Fail('Error'));
+				.toEqual(left('Error'));
 		});
 
 		it('converts override value to array if not already an array', async () => {
 			const merge = sinon.stub();
 			const setting = new PrimitiveSetting('foo');
+			// eslint-disable-next-line @typescript-eslint/require-await
 			setting.merge = async () => {
-				return Validation.Success('ok');
+				return right('ok');
 			};
 
 			const set = new SettingsSet({
 				foo: setting
 			}, () => {
-				return Maybe.Some('bar');
+				return just('bar');
 			});
 
 			await set.resolveSetting('foo', {});
-			sinon.assert.calledWith(merge, Maybe.Some(['bar']));
+			sinon.assert.calledWith(merge, just(['bar']));
 		});
 	});
 
@@ -82,7 +83,7 @@ describe('SettingsSet', () => {
 				const result = await set.resolveSetting('foo' as const, {});
 
 				type Input = typeof result;
-				type Expected = Validation<string, number>;
+				type Expected = Either<string, number>;
 				assert<IsExact<Input, Expected>>(true);
 			});
 
@@ -90,7 +91,7 @@ describe('SettingsSet', () => {
 				const result = await set.resolveSetting('bar' as const, {});
 
 				type Input = typeof result;
-				type Expected = Validation<string, string>;
+				type Expected = Either<string, string>;
 				assert<IsExact<Input, Expected>>(true);
 			});
 		});

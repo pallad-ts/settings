@@ -1,7 +1,7 @@
 import {Setting} from "./Setting";
 import {OverrideProvider} from "./OverrideProvider";
 import {ERRORS} from "./errors";
-import {Validation} from "monet";
+import {Either} from "@sweet-monads/either";
 
 export class SettingsSet<TNames extends string, T extends Record<TNames, Setting<unknown>>> {
 	private settingsMap = new Map<string, Setting<unknown>>(Object.entries(this.settings));
@@ -14,15 +14,15 @@ export class SettingsSet<TNames extends string, T extends Record<TNames, Setting
 		const setting = this.assertSettingByName(name);
 		const override = await this.overrideProvider(name, target);
 		const finalOverride = override.map(x => Array.isArray(x) ? x : [x]);
-		return await setting.merge(finalOverride) as Validation<string, Setting.Type<T[TName]>>;
+		return await setting.merge(finalOverride) as Either<string, Setting.Type<T[TName]>>;
 	}
 
 	async resolveSettingOrFail<TName extends TNames>(name: TName, target: unknown) {
 		const result = await this.resolveSetting<TName>(name, target);
-		result.forEachFail(x => {
-			throw ERRORS.INVALID_SETTING_VALUE.format(x);
-		})
-		return result.success();
+		if (result.isLeft()) {
+			throw ERRORS.INVALID_SETTING_VALUE.format(result.value);
+		}
+		return result.value;
 	}
 
 	private assertSettingByName(name: TNames) {
